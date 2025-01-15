@@ -56,6 +56,3 @@ def review_list_api_view(request):
     reviews = Review.objects.all()
     list_ = ReviewSerializer(instance=reviews, many=True).data
     return Response(data=list_)
-
-
-
