@@ -1,40 +1,37 @@
 from rest_framework import serializers
 from .models import Director, Movie, Review
-
-class DirectorSerializer(serializers.ModelSerializer):
-    movie_count = serializers.SerializerMethodField
-    class Meta:
-        model = Director
-        fields = ("id", "name", "movie_count")
-    
-    def get_movie_count(self, director):
-        return director.movie.count()
-
-    
+from rest_framework.exceptions import ValidationError
 
 
-class MovieSerializer(serializers.ModelSerializer):
-    average_rating = serializers.SerializerMethodField
-    class Meta:
-        model = Movie
-        fields = ("id", "titile", "description", "duration", "director", "reviews", "average_rating")
+class DirectorValidateSerializer(serializers.Serializer):
+    name = serializers.CharField(required=True, max_length=255, min_length=2)
 
 
-class ReviewSerializer(serializers.ModelSerializer):
-    average_rating = serializers.SerializerMethodField
-    class Meta:
-        model = Review
-        fields = ("id", "text", "movie", "stars")
-        def set_average_rating(self, movie):
-            reviews = movie.reviews.all()
-            if reviews:
-                sum_reviews = sum([reviews.stars for review in reviews])
-                average = sum_reviews/len(reviews)
-                return average
-            return None
+class MovieValidateSerializer(serializers.Serializer):
+    title = serializers.CharField(required=True, max_length=255, min_length=1)
+    description = serializers.CharField(required=False)
+    duration = serializers.IntegerField(min_value=1, required=True)
+    director_id = serializers.IntegerField(required=True)
+
+    def validate_director_id(self, director_id):
+        try:
+            Director.objects.get(id=director_id)
+        except Director.DoesNotExist:
+            raise ValidationError("Director does not exist!")
+        return director_id
 
 
+class ReviewValidateSerializer(serializers.Serializer):
+    text = serializers.CharField(required=True, max_length=1000, min_length=5)
+    movie_id = serializers.IntegerField(required=True)
+    stars = serializers.IntegerField(min_value=1, max_value=5, required=True)
 
+    def validate_movie_id(self, movie_id):
+        try:
+            Movie.objects.get(id=movie_id)
+        except Movie.DoesNotExist:
+            raise ValidationError("Movie does not exist!")
+        return movie_id
 
 
 
