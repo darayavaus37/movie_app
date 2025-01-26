@@ -1,4 +1,7 @@
 from django.db import models
+from django.contrib.auth.models import User
+import random
+
 
 
 class Director(models.Model):
@@ -37,6 +40,24 @@ class Review(models.Model):
 
     def __str__(self):
         return f'Отзыв фильма: {self.movie.title} - {self.stars} '
+    
+
+
+    def generate_confirmation_code(self):
+        self.confirmation_code = str(random.randint(100000, 999999))
+        self.save()
+        return self.confirmation_code
+
+
+
+
+class UserConfirmation(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    confirmation_code = models.CharField(max_length=6)
+    is_confirmed = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return f"Confirmation for {self.user.username}"
 
 
 
