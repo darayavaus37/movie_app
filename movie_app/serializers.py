@@ -1,48 +1,41 @@
 from rest_framework import serializers
-from .models import Director, Movie, Review
-from rest_framework.exceptions import ValidationError
+from django.contrib.auth.models import User
+from .models import UserConfirmation  
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'password']
+        extra_kwargs = {'password': {'write_only': True}}
+
+    def create(self, validated_data):
+        from .models import UserConfirmation  
+        user = User.objects.create_user(**validated_data)
+        UserConfirmation.objects.create(user=user)
+        return user
+
+class UserConfirmationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserConfirmation
+        fields = ['confirmation_code', 'is_confirmed']
 
 
 class DirectorSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(max_length=100)
-    movie_count = serializers.SerializerMethodField()
-
     class Meta:
+        from .models import Director  
         model = Director
-        fields = ('id', 'name', 'movie_count')
+        fields = ['id', 'name']
+
+
+class MovieSerializer(serializers.ModelSerializer):
+    class Meta:
+        from .models import Movie  
+        model = Movie
+        fields = ['id', 'title', 'description', 'duration', 'director']
 
 
 class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
+        from .models import Review  
         model = Review
-        fields = ('id', 'text', 'movie', 'stars')
-
-
-class ReviewValiditySerializer(serializers.Serializer):
-    text = serializers.CharField()
-    movie = serializers.IntegerField()
-    stars = serializers.IntegerField(min_value=1, max_value=5)
-
-
-class MovieSerializer(serializers.ModelSerializer):
-    average_rating = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Movie
-        fields = ('id', 'title', 'description', 'duration', 'director', 'average_rating')
-
-    def get_average_rating(self, movie):
-        reviews = movie.review_set.all()
-        if reviews:
-            sum_reviews = sum([review.stars for review in reviews])
-            average = sum_reviews / len(reviews)  # 6/2 = 3
-            return average
-        return None
-
-
-class MovieValidirySerializer(serializers.Serializer):
-    title = serializers.CharField(max_length=255)
-    description = serializers.CharField()
-    duration = serializers.IntegerField()
-    director = serializers.IntegerField()
-
+        fields = ['id', 'text', 'stars', 'movie']

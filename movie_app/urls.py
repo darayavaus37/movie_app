@@ -9,7 +9,12 @@ urlpatterns = [
     path('api/v1/movies/<int:id>/', views.MovieDetailAPIView.as_view()),  
     path('api/v1/reviews/', views.ReviewListAPIView.as_view()),  
     path('api/v1/reviews/<int:id>/', views.ReviewDetailAPIView.as_view()),  
+    path('api/v1/users/register/', views.UserRegisterAPIView.as_view(), name='user_register'),
+    path('api/v1/users/login/', views.UserLoginAPIView.as_view(), name='user_login'),
+    path('api/v1/users/confirm/', views.UserConfirmAPIView.as_view(), name='user_confirm'),
 ]
+
+
 
 
 
