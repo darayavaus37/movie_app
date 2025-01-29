@@ -1,23 +1,23 @@
-from django.shortcuts import render
+
 from rest_framework import generics
-from .models import Movie, Review, Director, UserConfirmation
-from .serializers import MovieSerializer, ReviewSerializer, DirectorSerializer, MovieValidirySerializer, ReviewValiditySerializer, UserSerializer
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from django.contrib.auth import authenticate
-from rest_framework.views import APIView
 from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
+from .models import Director, Movie, Review, UserConfirmation
+from .serializers import DirectorSerializer, MovieSerializer, ReviewSerializer, UserSerializer, UserConfirmationSerializer
 
 
 class DirectorListAPIView(generics.ListCreateAPIView):
     queryset = Director.objects.all()
     serializer_class = DirectorSerializer
 
-
-
 class DirectorDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Director.objects.all()
     serializer_class = DirectorSerializer
+    lookup_field = 'id'
+
 
 class MovieListAPIView(generics.ListCreateAPIView):
     queryset = Movie.objects.all()
@@ -26,51 +26,23 @@ class MovieListAPIView(generics.ListCreateAPIView):
 class MovieDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Movie.objects.all()
     serializer_class = MovieSerializer
-
-
-    def update_movie(self, movie, validated_data):
-        movie.title = validated_data['title']
-        movie.description = validated_data['description']
-        movie.duration = validated_data['duration']
-        movie.director = validated_data['director']
-        movie.save()
-
-    def perform_update(self, serializer):
-        movie = self.get_object()
-        self.update_movie(movie, serializer.validated_data)
-        return movie
+    lookup_field = 'id'
 
 
 class ReviewListAPIView(generics.ListCreateAPIView):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
 
-    def post(self, request, *args, **kwargs):
-        validator = ReviewValiditySerializer(data=request.data)
-        if validator.is_valid():
-            review = Review.objects.create(**validator.validated_data)
-            review.save()
-            return Response(ReviewSerializer(review).data, status=status.HTTP_201_CREATED)
-        return Response(validator.errors, status=status.HTTP_400_BAD_REQUEST)
-
 class ReviewDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
+    lookup_field = 'id'
 
-    def update_review(self, review, validated_data):
-        review.text = validated_data['text']
-        review.movie = validated_data['movie']
-        review.stars = validated_data['stars']
-        review.save()
-
-    def perform_update(self, serializer):
-        review = self.get_object()
-        self.update_review(review, serializer.validated_data)
-        return review
 
 class UserRegisterAPIView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
 
 class UserLoginAPIView(APIView):
     def post(self, request):
@@ -80,6 +52,7 @@ class UserLoginAPIView(APIView):
         if user:
             return Response({'message': 'User authenticated'}, status=status.HTTP_200_OK)
         return Response({'message': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
 
 class UserConfirmAPIView(APIView):
     def post(self, request):
@@ -95,3 +68,7 @@ class UserConfirmAPIView(APIView):
             return Response({'message': 'User confirmed successfully'}, status=status.HTTP_200_OK)
         except UserConfirmation.DoesNotExist:
             return Response({'message': 'Invalid confirmation code'}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+
+
